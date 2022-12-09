@@ -10,6 +10,15 @@ D 1
 L 5
 R 2"""
 
+TEST_2 = """R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20"""
+
 INP = """U 1
 D 2
 U 1
@@ -2012,21 +2021,24 @@ U 10
 L 19"""
 
 
-def disp(head, tail, size=10):
+def disp(head, tails, size=10):
     grid = [['.' for _ in range(size)] for _ in range(size)]
     real = int(head.real)
     imag = int(head.imag)
     grid[-1-imag][real] = 'H'
-    real = int(tail.real)
-    imag = int(tail.imag)
-    grid[-1-imag][real] = 'T'
+    for i, tail in enumerate(tails):
+        real = int(tail.real)
+        imag = int(tail.imag)
+        grid[-1-imag][real] = str(i+1)
     return '\n'.join([''.join(l) for l in grid])
 
 inp = INP
-
+first = False
 start = 0 + 0j
 head = start
-tail = start
+# tail = start
+tails = [start] if first else [start for _ in range(9)]
+# print(tails)
 tail_coords = set([start])
 
 directions = {
@@ -2046,17 +2058,23 @@ for line in inp.split('\n'):
         head += directions[dir]
         # print(head)
 
-        vector = head-tail
-        if abs(vector) > 1.5:
-            vector = vector / 2
-            real = vector.real
-            imag = vector.imag
-            real = custom_round(real)
-            imag = custom_round(imag)
-            new_vector = complex(real, imag)
-            tail += new_vector
-            tail_coords.add(tail)
-        # print(disp(head, tail))
+        prev = head
+        for i, tail in enumerate(tails):
+            vector = prev-tail
+            if abs(vector) > 1.5:
+                vector = vector / 2
+                real = vector.real
+                imag = vector.imag
+                real = custom_round(real)
+                imag = custom_round(imag)
+                new_vector = complex(real, imag)
+                tail += new_vector
+                if i == len(tails) - 1:
+                    tail_coords.add(tail)
+            tails[i] = tail
+            prev = tail
+        # print(head, tails)
+        # print(disp(head, tails, 25))
         # print('\n')
         
 
