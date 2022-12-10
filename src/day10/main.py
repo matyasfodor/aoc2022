@@ -37,8 +37,12 @@ def prev_solution(fname):
 
     return aggregate_val
 
-def new_solution(fname):
-    aggregate_val = 0
+def new_solution(fname, second):
+    if second:
+        lines = [['.' for _ in range(40)] for _ in range(6)]
+        current_line_no = -1
+    else:
+        aggregate_val = 0
     current_value = 1
     instruction_length = 0
     increment_value = 0
@@ -47,7 +51,6 @@ def new_solution(fname):
     with open(fname, 'r') as fp:
         while True:
             if instruction_length == 0:
-                # print('Apply increment', current_value, increment_value)
                 current_value += increment_value
                 try:
                     line = next(fp).strip()
@@ -66,10 +69,21 @@ def new_solution(fname):
 
             cycle += 1
 
-            if cycle in cycle_of_interest:
-                print('aggregate_val += current_value * cycle', aggregate_val, current_value, cycle)
-                aggregate_val += current_value * cycle
+            if second:
+                pos = (cycle - 1) % 40
+                if pos == 0:
+                    current_line_no += 1
+
+                if pos - 2 < current_value <= pos + 1:
+                    lines[current_line_no][pos] = '#'
+            else:
+                if cycle in cycle_of_interest:
+                    aggregate_val += current_value * cycle
+
+    if second:
+        aggregate_val = '\n'.join(''.join(l) for l in lines)
     return aggregate_val
 
 
-print(new_solution(fname))
+print(new_solution(fname, second=True))
+# RZEKEFHA
