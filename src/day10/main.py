@@ -14,7 +14,7 @@ def prev_solution(fname):
     current_cycle_to_track = next(cycle_of_interest_iter)
     prev_cycle = None
     with open(fname, 'r') as fp:
-        for i, line in enumerate(fp):
+        for line in fp:
             line = line.strip()
             if line == 'noop':
                 cycle_counter += 1
@@ -25,7 +25,6 @@ def prev_solution(fname):
                 current_value += num
 
             if prev_cycle is not None and prev_value is not None and current_cycle_to_track is not None and prev_cycle < current_cycle_to_track <= cycle_counter:
-                # print('aggregate_val += prev_value * current_cycle_to_track', aggregate_val, prev_value, current_cycle_to_track, line, prev_cycle, cycle_counter, i)
                 aggregate_val += prev_value * current_cycle_to_track
                 try:
                     current_cycle_to_track = next(cycle_of_interest_iter)
@@ -86,4 +85,3 @@ def new_solution(fname, second):
 
 
 print(new_solution(fname, second=True))
-# RZEKEFHA
