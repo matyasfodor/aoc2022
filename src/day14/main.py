@@ -52,10 +52,24 @@ def main(fname, second):
         x_max = max(x_max, pair[0][0], pair[1][0])
         y_max = max(y_max, pair[0][1], pair[1][1])
 
+    # Add line to the bottom
+    if second:
+        for i in range(500 - y_max - 2, 500 + y_max + 3):
+            line_set.add((i, y_max + 2))
+        # print(x_min, x_max)
+        x_min = min(x_min, 500 - y_max - 2)
+        x_max = max(x_max, 500 + y_max + 2)
+        y_max += 2
+        # print(x_min, x_max)
+
+
     current_sand = (500, 0)
     settlement = set()
     while True:
-        if current_sand[1] > y_max:
+        # TODO do not break here for second
+        if not second and current_sand[1] > y_max:
+            break
+        if second and (500, 0) in settlement:
             break
         # print(draw(x_min, y_min, x_max, y_max, line_set, settlement, current_sand))
         new_pos = coord_add(current_sand, (0, 1))
@@ -81,4 +95,4 @@ def main(fname, second):
 
 fname = 'src/day14/input.txt'
 
-print(main(fname, False))
+print(main(fname, True))
