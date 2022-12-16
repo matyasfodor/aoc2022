@@ -2,10 +2,61 @@
 
 from collections import defaultdict
 from functools import lru_cache
+import hashlib
 from itertools import pairwise, permutations
-from pprint import pprint
+from PIL import Image, ImageDraw
 import random
 import re
+
+
+def rgb(minimum, maximum, value):
+    minimum, maximum = float(minimum), float(maximum)
+    ratio = 2 * (value-minimum) / (maximum - minimum)
+    b = int(max(0, 255*(1 - ratio)))
+    r = int(max(0, 255*(ratio - 1)))
+    g = 255 - b - r
+    return r, g, b
+
+@lru_cache()
+def get_ordering_color(ordering):
+
+    hash_value = abs(hash(ordering)) % 1000
+    print(hash_value)
+    color = rgb(0, 1000, hash_value)
+    return color
+
+
+class Animation:
+    def __init__(self, cell_size) -> None:
+        self.frames = []
+        self.cell_size = cell_size
+
+    def add_frame(self, pool, max_so_far):
+        pool = pool[::-1]
+        height = len(pool)
+        width = len(pool[0][0]) + 4
+        # height = len(mx)
+        # width = len(mx[0])
+        image = Image.new("RGB", (width*self.cell_size, height*self.cell_size), "black")
+        draw = ImageDraw.Draw(image)
+        for i, (ordering, cost) in enumerate(pool):
+            # color = #get_ordering_color(tuple(ordering))
+            color = rgb(0, max_so_far, cost)
+            for j, e in enumerate(ordering):
+                draw.text((j*self.cell_size, i*self.cell_size), text=str(e), fill=color)
+
+            draw.text(((j+2) * self.cell_size, i*self.cell_size), text=str(cost))
+        self.frames.append(image)
+
+    def export(self, fname):
+        frame_one = self.frames[0]
+        subsample = None
+        frames = [f for i, f in enumerate(self.frames) if subsample is None or i % subsample == 0]
+        print('start save')
+        frame_one.save(fname, format="GIF", append_images=frames,
+                    save_all=True, duration=250, loop=0)
+        print('saved')
+        
 
 
 def dfs(graph):
@@ -90,6 +141,8 @@ def shuffle(arr):
 def solver4(graph, distance_matrix, second):
     # task: find the best ordering for a given set of keys
 
+    animation = Animation(20)
+
     time = 26 if second else 30
 
     keys = graph.keys()
@@ -119,10 +172,10 @@ def solver4(graph, distance_matrix, second):
         return ret
 
     best_score = 0
-    for i in range(1000):
+    for i in range(1):
         random.seed(i)
         num_generations = 100
-        pool_size = 40
+        pool_size = 10
         # keep = 0.5
 
         pool = [shuffle(keys) for _ in range(pool_size)]
@@ -134,11 +187,15 @@ def solver4(graph, distance_matrix, second):
             # pool_with_values.
             wild_types = [shuffle(keys) for _ in range(pool_size)]
             pool_with_values.extend(((p, cost_function(tuple(p))) for p in wild_types))
+            # animation.add_frame(pool_with_values)
             pool_with_values.sort(key=lambda x: x[1])
+            animation.add_frame(pool_with_values, 1600)
             # print('Best in current gen:', pool_with_values[-1])
             best_score = max(best_score, pool_with_values[-1][1])
             print(best_score)
             pool = [p for (p, _) in pool_with_values[-pool_size:]]
+
+    animation.export('src/day16/animation.gif')
 
     return best_score
 
@@ -212,7 +269,7 @@ def main(fname):
     for s in graph.keys():
         for t, d in graph[s]['targets']:
             distance_matrix[s][t] = d
-    second = True
+    second = False
 
     print(solver4(graph, distance_matrix, second))
     # print(get_agg(graph, distance_matrix, ['AA', 'MD', 'DS', 'YW', 'SS', 'FS', 'KI', 'SQ', 'PZ', 'TX', 'HG', 'IK', 'JE', 'IT', 'YB', 'CR'], 30))
