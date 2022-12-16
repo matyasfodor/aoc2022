@@ -87,16 +87,24 @@ def shuffle(arr):
     random.shuffle(ret)
     return ret
 
-def solver4(graph, distance_matrix):
+def solver4(graph, distance_matrix, second):
     # task: find the best ordering for a given set of keys
+
+    time = 26 if second else 30
 
     keys = graph.keys()
     keys = [k for k in keys if k != 'AA']
 
     @lru_cache()
     def cost_function(ordering):
-        ordering = ['AA'] + list(ordering)
-        return get_agg(graph, distance_matrix, ordering, 30)
+        if second:
+            half = int(len(ordering) / 2.0)
+            first_half = ['AA'] + list(ordering[:half])
+            second_half = ['AA'] + list(ordering[half:])
+            return get_agg(graph, distance_matrix, first_half, time) + get_agg(graph, distance_matrix, second_half, time)
+        else:
+            ordering = ['AA'] + list(ordering)
+            return get_agg(graph, distance_matrix, ordering, time)
 
     def mutation(ordering):
         i1 = random.randint(0, len(ordering)-1)
@@ -204,8 +212,9 @@ def main(fname):
     for s in graph.keys():
         for t, d in graph[s]['targets']:
             distance_matrix[s][t] = d
+    second = True
 
-    print(solver4(graph, distance_matrix))
+    print(solver4(graph, distance_matrix, second))
     # print(get_agg(graph, distance_matrix, ['AA', 'MD', 'DS', 'YW', 'SS', 'FS', 'KI', 'SQ', 'PZ', 'TX', 'HG', 'IK', 'JE', 'IT', 'YB', 'CR'], 30))
 
 
