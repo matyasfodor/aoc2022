@@ -1,3 +1,10 @@
+import os
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+import matplotlib.animation as animation
+from matplotlib import rcParams
+
 
 def get_neighbors(mx, i, j, k):
     ret = []
@@ -26,26 +33,50 @@ def count_neighbors(mx, neighbor_value, i, j, k):
         x, y, z = neighbor
         if mx[x][y][z] == neighbor_value:
             ret += 1
-    # if i > 0 and mx[i-1][j][k] == 1:
-    #     ret += 1
-    
-    # if i < len(mx) - 1 and mx[i+1][j][k] == 1:
-    #     ret += 1
-
-    # if j > 0 and mx[i][j-1][k] == 1:
-    #     ret += 1
-    
-    # if j < len(mx) - 1 and mx[i][j+1][k] == 1:
-    #     ret += 1
-
-    # if k > 0 and mx[i][j][k-1] == 1:
-    #     ret += 1
-    
-    # if k < len(mx) - 1 and mx[i][j][k+1] == 1:
-    #     ret += 1
 
     return ret
 
+
+def plot_mx(mx):
+    data = np.array(mx)
+    voxelarray = np.zeros(data.shape, dtype=bool)
+    voxelarray[data < 2] = True
+    colors= np.zeros(list(data.shape) + [4], dtype=np.float32)
+
+    colors[voxelarray == 1] = [0,1,0,0.3]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.axis('off')
+
+    ax.voxels(voxelarray, facecolors=colors)
+
+    voxelarray = np.zeros(data.shape, dtype=bool)
+    voxelarray[data == 0] = True
+
+    colors= np.zeros(list(data.shape) + [4], dtype=np.float32)
+
+    colors[data == 0] = [0.5, 0.2, 0.8, 1]
+
+    ax.voxels(voxelarray, facecolors=colors)
+
+    # for angle in range(0, 360):
+    #     ax.view_init(30, angle)
+    #     plt.draw()
+    #     plt.pause(.001)
+
+    def animate(i):
+        ax.view_init(30, i * 10)
+        return fig ,
+        # redDot.set_data(i, np.sin(i))
+        # return redDot,
+
+    rcParams['animation.convert_path'] = os.path.dirname(__file__)
+
+    myAnimation = animation.FuncAnimation(fig, animate, frames=np.arange(0.0, 36, 1), \
+                                        interval=100, blit=True, repeat=False)
+
+    myAnimation.save('myAnimation.gif', writer='imagemagick', fps=10)
 
 def fill(mx, fill_value):
     if mx[0][0][0] == 0:
@@ -93,6 +124,7 @@ def main(fname, second):
     
     if second:
         mx = fill(mx, 2)
+        plot_mx(mx)
         hole_surface = 0
         for i in range(height):
             for j in range(height):
@@ -100,16 +132,9 @@ def main(fname, second):
                     if mx[i][j][k] == 0:
                         hole_surface += count_neighbors(mx, 1, i,j,k)
 
+        print(hole_surface)
+
         sum_sides -= hole_surface
-
-    # layer_groups = defaultdict(list)
-    # for coord in coords:
-    #     layer_groups[coord[0]].append(coord)
-
-    # layer_keys = sorted(layer_groups.keys())
-    
-    # prev = None
-    # for key in layer_keys:
     print(sum_sides)
 
 
