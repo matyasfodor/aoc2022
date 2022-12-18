@@ -1,6 +1,5 @@
 
 from itertools import cycle, islice
-from more_itertools import peekable
 
 
 SHAPES = [
@@ -63,7 +62,8 @@ def apply_move(shape, move):
 def gen_movements(fname):
     with open(fname, 'r') as fp:
         instructions = fp.read().strip()
-    for c in instructions:
+    for i, c in enumerate(instructions):
+        # print("index", i)
         yield c
 
 def collides(state, insertion, shape):
@@ -74,7 +74,6 @@ def collides(state, insertion, shape):
 
     working_part.extend(0 for _ in range(len(shape) - insertion))
 
-    # print('working_part', working_part, insertion)
 
     for i, shape_line in enumerate(shape):
         if working_part[i] & shape_line:
@@ -82,103 +81,70 @@ def collides(state, insertion, shape):
     return False
 
 def insert_to_state(state, insertion, shape):
-    # only need to deal with "outstanding" parts
 
-    # 1. take last insertion lines from state
-    # 2. extend it to len shape
-    # 3. simply add shape to thsi working sprite
-    # 4. remove overlappign lines from state
-    # 5. add working sprite
 
     if insertion > 0:
         working_part = state[-insertion:]
     else:
         working_part = []
-    # print("Shape :", display(shape[::-1]))
-    # print("Working part:", display(working_part[::-1]))
     working_part.extend(0 for _ in range(len(shape) - insertion))
-    # print("Working part:", display(working_part[::-1]))
     for i, shape_line in enumerate(shape):
         working_part[i] = working_part[i] | shape_line
-    # print("Working part:", display(working_part[::-1]))
-
-    # print("State", display(state[::-1]))
-    # print("\n")
-    # print("State", display(state[:-insertion][::-1]))
 
     return (state[:-insertion] if insertion > 0 else state) + working_part
 
 def gen_shapes(limit):
     yield from islice(cycle(SHAPES), limit)
 
+def collision_check(container1, container2):
+    for a, b in zip(container1, container2):
+        if a & b > 0:
+            return True
+    return False
+
+def display_containers(state_container, shape_container):
+    print('\n'.join(display([a | b for a, b in zip(state_container, shape_container)])))
+
 def main(fname, second):
-    movements = peekable(gen_movements(fname))
+    movements = cycle(gen_movements(fname))
     shapes = gen_shapes(2022)
 
     state = []
-    for shape in islice(shapes, 5):
-        display_current_state(state, 3, shape)
-        # print("new shape", shape)
-        # print(display(shape))
-        # print('\n')
-        for i, move in enumerate(islice(movements, 3)):
-            shape = apply_move(shape, move)
-            print(display_current_state(state, 3 - i, shape))
-            print('\n')
+    pad = 3
+    for shape in shapes:
+        shape_container = shape + [0 for _ in range(pad + len(state))]
+        state_container = [0 for _ in range(len(shape_container) - len(state))] + state[:]
 
-        insertion = 0
         still_moving = True
         while True:
+            # display_containers(state_container, shape_container)
+            # print("")
             if still_moving:
-                next_move = next(movements)
-                next_shape = apply_move(shape, next_move)
-                if collides(state, insertion, next_shape):
-                    movements.prepend(next_move)
-                    still_moving = False
+                move = next(movements)
+                # print("Move: ", move)
+                new_shape_container = apply_move(shape_container, move)
+                if collision_check(state_container, new_shape_container):
+                    # print("  retract:", move)
+                    pass
                 else:
-                    shape = next_shape
+                    shape_container = new_shape_container
 
-            # print("try inserting", insertion, len(state), insertion + 1 < len(state))
+            last_item = shape_container[-1]
+            new_shape_container = [0] + shape_container[:-1]
+            if last_item > 0 or collision_check(state_container, new_shape_container):
+                state = [a | b for a, b in zip(state_container, shape_container)]
+                while state[0] == 0:
+                    state.pop(0)
 
-            if insertion + 1 >= len(state) or collides(state, insertion + 1, shape):
                 break
-            insertion += 1
+            else:
+                shape_container = new_shape_container
+
+    # display_containers(state_container, shape_container)
+    print(len(state))
 
 
-        # insertion = 0
-        # is_moving = True
-        # while insertion < len(state):
-        #     if is_moving:
-        #         move = next(movements)
-        #         new_shape = apply_move(shape, move)
-        #         if collides(state, insertion, shape):
-        #             is_moving = False
-        #             movements.prepend(move)
-        #         else:
-        #             shape = new_shape
-            
-            
-            # try insertion
-            # if successfull, progress
-            # if unsuccesfull, backtrack
-            # pass
-            # try to move
-        # print("Insertion", insertion)
-
-        # print("\nbefore\n")
-        # print("\n".join(display(state[::-1])))
-        # print("\n")
-
-        state = insert_to_state(state, insertion, shape[::-1])
-        # print("\n")
-        # print("\n".join(display(state[::-1])))
-        # print("\n")
-    print("################")
-    print("################\n")
-    print("\n".join(display(state[::-1])))
-
-
-fname = 'src/day17/test.txt'
+fname = 'src/day17/input.txt'
 second = False
 
 
