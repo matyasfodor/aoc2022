@@ -60,16 +60,9 @@ def plot_mx(mx):
 
     ax.voxels(voxelarray, facecolors=colors)
 
-    # for angle in range(0, 360):
-    #     ax.view_init(30, angle)
-    #     plt.draw()
-    #     plt.pause(.001)
-
     def animate(i):
         ax.view_init(30, i * 10)
-        return fig ,
-        # redDot.set_data(i, np.sin(i))
-        # return redDot,
+        return fig,
 
     rcParams['animation.convert_path'] = os.path.dirname(__file__)
 
